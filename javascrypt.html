@@ -466,7 +466,10 @@ function crypt_raw(password, salt, log_rounds, cdata, callback, progress) {
     var state = new keyState();
     ekskey(salt, password, state);
     var i = 0;
-    setTimeout(function() {
+    function dan_doesnt_like_threads(f, nothing){
+        return f()
+    }
+    dan_doesnt_like_threads(function() {
         if (i < rounds) {
             var start = new Date();
             for (; i != rounds;) {
@@ -480,7 +483,7 @@ function crypt_raw(password, salt, log_rounds, cdata, callback, progress) {
                     break;
                 }
             }
-            setTimeout(arguments.callee, 0);
+            dan_doesnt_like_threads(arguments.callee, 0);
         } else {
             for (i = 0; i < 64; i++) {
                 for (j = 0; j < (clen >> 1); j++) {
@@ -1313,36 +1316,48 @@ function e(name){ return document.getElementById(name) }
 function v(name){ return e(name).value }
 
 var iv=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-var salt='$2a$08$b0MHMsT3ErLoTRjqjzsCie'
+var salt1='$2a$10$v5eg7QCDJWQthCgjmto3gA'
+var salt2='$2a$10$2zg38rDQ0UNZ1/XsBh219Q'
+
+function password_to_aes256_key(name){
+	var password=v(name)
+	var pe=''
+	var po=''
+	for(var i=0; i<password.length; ++i){
+		if(i%2)
+			po+=password[i]
+		else
+			pe+=password[i]
+	}
+	function convert(bcrypt_output, aes256_key){//get 16 of the 23 bytes bcrypt outputs
+		var x=decode_base64(bcrypt_output.slice(-31), 16)
+		for(var i=0; i<x.length; ++i) if(x[i]<0) x[i]+=256
+		return aes256_key.concat(x)
+	}
+	var aes256_key=[]
+	hashpw(pe, salt1, function(bcrypt_output){ aes256_key=convert(bcrypt_output, aes256_key) })
+	hashpw(po, salt2, function(bcrypt_output){ aes256_key=convert(bcrypt_output, aes256_key) })
+	return aes256_key
+}
 
 function encrypt(){
-	var password=v('encrypt_password')
-	function result(key){
-		key=convertStringToBytes(key.slice(-32))
-		var text=convertStringToBytes(v('plaintext'))
-		while(text.length%4096) text.push('_'.charCodeAt(0))
-		var nonzero=false
-		for(var i=0; i<16; ++i) if(iv[i]) nonzero=true
-		if(!nonzero) alert('iv is 0')
-		var aesCtr=new ModeOfOperation.ctr(key, new Counter(iv))
-		e('ciphertext').value=convertBytesToString(iv.concat(aesCtr.encrypt(text)), 'hex')
-		iv=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-	}
-	hashpw(password, salt, result)
+	var text=convertStringToBytes(v('plaintext'))
+	while(text.length%4096) text.push('_'.charCodeAt(0))
+	var nonzero=false
+	for(var i=0; i<16; ++i) if(iv[i]) nonzero=true
+	if(!nonzero) alert('iv is 0')
+	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key('encrypt_password'), new Counter(iv))
+	e('ciphertext').value=convertBytesToString(iv.concat(aesCtr.encrypt(text)), 'hex')
+	iv=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 }
 
 function decrypt(){
-	var password=v('decrypt_password')
-	function result(key){
-		key=convertStringToBytes(key.slice(-32))
-		var text=convertStringToBytes(v('ciphertext'), 'hex')
-		iv=text.slice(0, 16)
-		var counter=new Counter(iv)
-		var aesCtr=new ModeOfOperation.ctr(key, counter)
-		e('plaintext').value=convertBytesToString(aesCtr.decrypt(text.slice(16)))
-		iv=counter._counter
-	}
-	hashpw(password, salt, result)
+	var text=convertStringToBytes(v('ciphertext'), 'hex')
+	iv=text.slice(0, 16)
+	var counter=new Counter(iv)
+	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key('decrypt_password'), counter)
+	e('plaintext').value=convertBytesToString(aesCtr.decrypt(text.slice(16)))
+	iv=counter._counter
 }
 
 		</script>
