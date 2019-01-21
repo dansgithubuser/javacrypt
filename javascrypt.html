@@ -1319,8 +1319,8 @@ var iv=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 var salt1='$2a$10$v5eg7QCDJWQthCgjmto3gA'
 var salt2='$2a$10$2zg38rDQ0UNZ1/XsBh219Q'
 
-function password_to_aes256_key(name){
-	var password=v(name)
+function password_to_aes256_key(){
+	var password=v('password')
 	var pe=''
 	var po=''
 	for(var i=0; i<password.length; ++i){
@@ -1346,7 +1346,7 @@ function encrypt(){
 	var nonzero=false
 	for(var i=0; i<16; ++i) if(iv[i]) nonzero=true
 	if(!nonzero) alert('iv is 0')
-	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key('encrypt_password'), new Counter(iv))
+	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key(), new Counter(iv))
 	e('ciphertext').value=convertBytesToString(iv.concat(aesCtr.encrypt(text)), 'hex')
 	iv=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 }
@@ -1355,7 +1355,7 @@ function decrypt(){
 	var text=convertStringToBytes(v('ciphertext'), 'hex')
 	iv=text.slice(0, 16)
 	var counter=new Counter(iv)
-	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key('decrypt_password'), counter)
+	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key(), counter)
 	e('plaintext').value=convertBytesToString(aesCtr.decrypt(text.slice(16)))
 	iv=counter._counter
 }
@@ -1363,12 +1363,11 @@ function decrypt(){
 		</script>
 	</head>
 	<body>
+		password &nbsp; <input type='password' id='password'><br>
 		-----ciphertext-----<br>
-		password &nbsp; <input type='password' id='decrypt_password'><br>
 		<input type='button' value='decrypt' onClick='decrypt()'><br>
 		<textarea id='ciphertext' rows='8' cols='80'></textarea><br>
 		-----plaintext-----<br>
-		password &nbsp; <input type='password' id='encrypt_password'><br>
 		<input type='button' value='encrypt' onClick='encrypt()'><br>
 		<textarea id='plaintext' rows='8' cols='80'></textarea>
 	</body>
