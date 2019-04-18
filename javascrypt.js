@@ -1331,22 +1331,34 @@ function password_to_aes256_key(password){
 	return aes256_key
 }
 
-function encrypt(plaintext, password){
+function encrypt(plaintext, password, includeLength, chunkLength=4096){
+	if(includeLength) plaintext=`L${plaintext.length}L${plaintext}`
 	var text=convertStringToBytes(plaintext)
-	while(text.length%4096) text.push('_'.charCodeAt(0))
+	while(text.length%chunkLength) text.push('_'.charCodeAt(0))
 	var nonzero=false
 	for(var i=0; i<16; ++i) if(iv[i]) nonzero=true
 	if(!nonzero) alert('iv is 0')
 	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key(password), new Counter(iv))
-	e('ciphertext').value=convertBytesToString(iv.concat(aesCtr.encrypt(text)), 'hex')
+	var result=convertBytesToString(iv.concat(aesCtr.encrypt(text)), 'hex')
 	iv=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+	return result
 }
 
-function decrypt(ciphertext, password){
+function decrypt(ciphertext, password, includeLength){
 	var text=convertStringToBytes(ciphertext, 'hex')
 	iv=text.slice(0, 16)
 	var counter=new Counter(iv)
 	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key(password), counter)
-	e('plaintext').value=convertBytesToString(aesCtr.decrypt(text.slice(16)))
+	var result=convertBytesToString(aesCtr.decrypt(text.slice(16)))
 	iv=counter._counter
+	if(includeLength){
+		[_, length, result]=result.match(/L(\d+)L(.*)/)
+		result=result.slice(0, length)
+	}
+	return result
 }
+
+module.exports={
+	encrypt: encrypt,
+	decrypt: decrypt,
+};

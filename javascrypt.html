@@ -12,10 +12,10 @@ function v(name){ return e(name).value }
 	<body>
 		password &nbsp; <input type='password' id='password'><br>
 		-----ciphertext-----<br>
-		<input type='button' value='decrypt' onClick='decrypt(v("ciphertext"), v("password"))'><br>
+		<input type='button' value='decrypt' onClick='e("plaintext").value=decrypt(v("ciphertext"), v("password"))'><br>
 		<textarea id='ciphertext' rows='8' cols='80'></textarea><br>
 		-----plaintext-----<br>
-		<input type='button' value='encrypt' onClick='encrypt(v("plaintext"), v("password"))'><br>
+		<input type='button' value='encrypt' onClick='e("ciphertext").value=encrypt(v("plaintext"), v("password"))'><br>
 		<textarea id='plaintext' rows='8' cols='80'></textarea>
 	</body>
 </html>
