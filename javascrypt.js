@@ -1307,7 +1307,7 @@ var ModeOfOperation = {
 };
 //==========//
 
-var iv=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+var iv=[...(new Counter((new Date).getTime()))._counter.slice(-8), 0, 0, 0, 0, 0, 0, 0, 0]
 var salt1='$2a$10$v5eg7QCDJWQthCgjmto3gA'
 var salt2='$2a$10$2zg38rDQ0UNZ1/XsBh219Q'
 
