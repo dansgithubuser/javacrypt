@@ -1,8 +1,3 @@
-<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN'>
-<html>
-	<head>
-		<script type='text/javascript'>
-
 //=====adapted from https://github.com/nevins-b/javascript-bcrypt=====//
 /* MIT License
 Copyright (c) 2016 Nevins Bartolomeo
@@ -1312,15 +1307,11 @@ var ModeOfOperation = {
 };
 //==========//
 
-function e(name){ return document.getElementById(name) }
-function v(name){ return e(name).value }
-
 var iv=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 var salt1='$2a$10$v5eg7QCDJWQthCgjmto3gA'
 var salt2='$2a$10$2zg38rDQ0UNZ1/XsBh219Q'
 
-function password_to_aes256_key(){
-	var password=v('password')
+function password_to_aes256_key(password){
 	var pe=''
 	var po=''
 	for(var i=0; i<password.length; ++i){
@@ -1340,35 +1331,22 @@ function password_to_aes256_key(){
 	return aes256_key
 }
 
-function encrypt(){
-	var text=convertStringToBytes(v('plaintext'))
+function encrypt(plaintext, password){
+	var text=convertStringToBytes(plaintext)
 	while(text.length%4096) text.push('_'.charCodeAt(0))
 	var nonzero=false
 	for(var i=0; i<16; ++i) if(iv[i]) nonzero=true
 	if(!nonzero) alert('iv is 0')
-	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key(), new Counter(iv))
+	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key(password), new Counter(iv))
 	e('ciphertext').value=convertBytesToString(iv.concat(aesCtr.encrypt(text)), 'hex')
 	iv=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 }
 
-function decrypt(){
-	var text=convertStringToBytes(v('ciphertext'), 'hex')
+function decrypt(ciphertext, password){
+	var text=convertStringToBytes(ciphertext, 'hex')
 	iv=text.slice(0, 16)
 	var counter=new Counter(iv)
-	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key(), counter)
+	var aesCtr=new ModeOfOperation.ctr(password_to_aes256_key(password), counter)
 	e('plaintext').value=convertBytesToString(aesCtr.decrypt(text.slice(16)))
 	iv=counter._counter
 }
-
-		</script>
-	</head>
-	<body>
-		password &nbsp; <input type='password' id='password'><br>
-		-----ciphertext-----<br>
-		<input type='button' value='decrypt' onClick='decrypt()'><br>
-		<textarea id='ciphertext' rows='8' cols='80'></textarea><br>
-		-----plaintext-----<br>
-		<input type='button' value='encrypt' onClick='encrypt()'><br>
-		<textarea id='plaintext' rows='8' cols='80'></textarea>
-	</body>
-</html>
